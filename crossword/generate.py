@@ -145,6 +145,7 @@ class CrosswordCreator():
         return False if one or more domains end up empty.
         """
 
+
         raise NotImplementedError
 
     def assignment_complete(self, assignment):
@@ -152,7 +153,11 @@ class CrosswordCreator():
         Return True if `assignment` is complete (i.e., assigns a value to each
         crossword variable); return False otherwise.
         """
-        raise NotImplementedError
+        for variable in assignment:
+            #if the variable is assigned more than just one word, then return false
+            if len(assignment[variable]) != 1:
+                return False
+        return True
 
     def consistent(self, assignment):
         """
@@ -168,7 +173,19 @@ class CrosswordCreator():
         The first value in the list, for example, should be the one
         that rules out the fewest values among the neighbors of `var`.
         """
-        raise NotImplementedError
+        #dictionary mapping variable and count of elimination in neighbor variables
+        dictionary = dict()
+
+        for neighbor in self.crossword.neighbors(var):
+            count = 0
+            for word in self.domains[neighbor]:
+                overLapIndex = self.crossword.overlaps[(var,neighbor)]
+                if(list(self.domains[var])[0][overLapIndex[0]] != word[overLapIndex[1]]):
+                    count += 1
+            dictionary[neighbor] = count
+        dictionary = dict(sorted(dictionary.items(), key=lambda item: item[1]))
+        ans = [k for k in dictionary]
+        return ans
 
     def select_unassigned_variable(self, assignment):
         """
@@ -178,7 +195,10 @@ class CrosswordCreator():
         degree. If there is a tie, any of the tied variables are acceptable
         return values.
         """
-        raise NotImplementedError
+        for variable in self.crossword.variables:
+            if variable not in assignment:
+                return variable
+        return None
 
     def backtrack(self, assignment):
         """
