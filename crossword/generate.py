@@ -154,7 +154,7 @@ class CrosswordCreator():
                         aQueue.append((i,j))
         while(len(aQueue) > 0):
             (X, Y) = aQueue.pop(0)
-            print(self.domains[X], " => ", self.domains[Y])
+            # print(self.domains[X], " => ", self.domains[Y])
             if self.revise(X, Y):
                 if len(self.domains[X]) == 0:
                     return False
@@ -186,12 +186,17 @@ class CrosswordCreator():
         #function assumes that enforce_node_consistency() is applied already
         for variable in assignment:
             #if words are not distinct in assignment return False
-            print("Error: ",variable," => ",assignment[variable])
+            # print("Error: ",variable," => ",assignment[variable])
             if(len(assignment[variable]) != len(set(assignment[variable]))):
                 return False
             for neighbor in self.crossword.neighbors(variable): #neighbor of variable
-                for wN in self.domains[neighbor]: #words in neighbors
-                    for wV in self.domains[variable]: #words in variable itself
+                for wN in self.domains[neighbor].copy(): #words in neighbors
+                    for wV in self.domains[variable].copy(): #words in variable itself
+                        if(wN == wV):
+                            if len(self.domains[variable]) > len(self.domains[neighbor]):
+                                self.domains[variable].remove(wV)
+                            else:
+                                self.domains[neighbor].remove(wN)
                         overLapIndex = self.crossword.overlaps[(variable,neighbor)] # index where letter should be overlapped
                         if(wV[overLapIndex[0]] != wN[overLapIndex[1]]): #if letter don't overlap at given index then return False
                             return False
@@ -248,21 +253,28 @@ class CrosswordCreator():
 
         If no assignment is possible, return None.
         """
+        import random
         #check if assignment is complete
         if(self.assignment_complete(assignment)):
             return assignment
         var = self.select_unassigned_variable(assignment)
-        for value in self.order_domain_values(var, assignment):
-            print(1)
-            if self.consistent(self.domains):
+        print(var)
+        print(self.domains)
+        for value in self.domains:
+            if self.consistent(assignment):
                 print(self.domains)
-                print("assignment[var]: ",list(self.domains[value])[0])
+                # print("assignment[var]: ",list(self.domains[value])[0])
                 assignment[var] = list(self.domains[var])[0]
+                # print("assignment: ",assignment)
                 result = self.backtrack(assignment)
-                print(assignment, " => ", result)
+                # print(assignment, " => ", result)
+                temp = {}
+                for k in self.domains:
+                    #if there are more than 1 word that works then choose the first one
+                    temp[k]=random.choice(list(self.domains[k]))
                 if result is not None:
-                    print("backtrack result: ", result)
-                    return result
+                    # print("backtrack result: ", result)
+                    return temp
                 assignment.remove(var)
         return None
         
