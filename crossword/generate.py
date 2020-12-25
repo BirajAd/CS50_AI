@@ -23,11 +23,13 @@ class CrosswordCreator():
             [None for _ in range(self.crossword.width)]
             for _ in range(self.crossword.height)
         ]
+        print("Final assignment: ",assignment)
         for variable, word in assignment.items():
             direction = variable.direction
             for k in range(len(word)):
                 i = variable.i + (k if direction == Variable.DOWN else 0)
                 j = variable.j + (k if direction == Variable.ACROSS else 0)
+                print("word: ",word,"letter: ",word[k])
                 letters[i][j] = word[k]
         return letters
 
@@ -152,12 +154,15 @@ class CrosswordCreator():
                         aQueue.append((i,j))
         while(len(aQueue) > 0):
             (X, Y) = aQueue.pop(0)
+            print(self.domains[X], " => ", self.domains[Y])
             if self.revise(X, Y):
                 if len(self.domains[X]) == 0:
                     return False
                 for Z in self.crossword.neighbors(X):
                     if(Z != Y):
                         aQueue.append((Z, X))
+            # print([(self.domains[k[0]], self.domains[k[1]]) for k in aQueue])
+            # print(aQueue)
         return True
 
     def assignment_complete(self, assignment):
@@ -165,9 +170,11 @@ class CrosswordCreator():
         Return True if `assignment` is complete (i.e., assigns a value to each
         crossword variable); return False otherwise.
         """
+        if(len(assignment) == 0):
+            return False
         for variable in assignment:
             #if the variable is assigned more than just one word, then return false
-            if len(assignment[variable]) != 1:
+            if len(self.domains[variable]) < 1:
                 return False
         return True
 
@@ -179,6 +186,7 @@ class CrosswordCreator():
         #function assumes that enforce_node_consistency() is applied already
         for variable in assignment:
             #if words are not distinct in assignment return False
+            print("Error: ",variable," => ",assignment[variable])
             if(len(assignment[variable]) != len(set(assignment[variable]))):
                 return False
             for neighbor in self.crossword.neighbors(variable): #neighbor of variable
@@ -201,10 +209,11 @@ class CrosswordCreator():
 
         for neighbor in self.crossword.neighbors(var):
             count = 0
-            for word in self.domains[neighbor]:
-                overLapIndex = self.crossword.overlaps[(var,neighbor)]
-                if(list(self.domains[var])[0][overLapIndex[0]] != word[overLapIndex[1]]):
-                    count += 1
+            for wN in self.domains[neighbor]: #words in neighbors
+                for wV in self.domains[var]: #words in variable itself
+                    overLapIndex = self.crossword.overlaps[(var,neighbor)] # index where letter should be overlapped
+                    if(wV[overLapIndex[0]] != wN[overLapIndex[1]]): #if letter don't overlap at given index
+                        count += 1
             dictionary[neighbor] = count
         dictionary = dict(sorted(dictionary.items(), key=lambda item: item[1]))
         ans = [k for k in dictionary]
@@ -243,13 +252,18 @@ class CrosswordCreator():
         if(self.assignment_complete(assignment)):
             return assignment
         var = self.select_unassigned_variable(assignment)
-        for value in self.domains:
-            new_assignment = assignment.copy()
-            new_assignment[var] = value
-            if consistent(new_assignment):
-                result = backtrack(new_assignment)
+        for value in self.order_domain_values(var, assignment):
+            print(1)
+            if self.consistent(self.domains):
+                print(self.domains)
+                print("assignment[var]: ",list(self.domains[value])[0])
+                assignment[var] = list(self.domains[var])[0]
+                result = self.backtrack(assignment)
+                print(assignment, " => ", result)
                 if result is not None:
+                    print("backtrack result: ", result)
                     return result
+                assignment.remove(var)
         return None
         
 
