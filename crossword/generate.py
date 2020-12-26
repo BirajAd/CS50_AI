@@ -23,13 +23,13 @@ class CrosswordCreator():
             [None for _ in range(self.crossword.width)]
             for _ in range(self.crossword.height)
         ]
-        print("Final assignment: ",assignment)
+        # print("Final assignment: ",assignment)
         for variable, word in assignment.items():
             direction = variable.direction
             for k in range(len(word)):
                 i = variable.i + (k if direction == Variable.DOWN else 0)
                 j = variable.j + (k if direction == Variable.ACROSS else 0)
-                print("word: ",word,"letter: ",word[k])
+                # print("word: ",word,"letter: ",word[k])
                 letters[i][j] = word[k]
         return letters
 
@@ -184,10 +184,12 @@ class CrosswordCreator():
         puzzle without conflicting characters); return False otherwise.
         """
         #function assumes that enforce_node_consistency() is applied already
+        # print("my assignment",assignment)
         for variable in assignment:
             #if words are not distinct in assignment return False
             # print("Error: ",variable," => ",assignment[variable])
-            if(len(assignment[variable]) != len(set(assignment[variable]))):
+            if(len(self.domains[variable]) != len(set(self.domains[variable]))):
+                # print("length fault")
                 return False
             for neighbor in self.crossword.neighbors(variable): #neighbor of variable
                 for wN in self.domains[neighbor].copy(): #words in neighbors
@@ -211,17 +213,25 @@ class CrosswordCreator():
         """
         #dictionary mapping variable and count of elimination in neighbor variables
         dictionary = dict()
-
-        for neighbor in self.crossword.neighbors(var):
-            count = 0
-            for wN in self.domains[neighbor]: #words in neighbors
-                for wV in self.domains[var]: #words in variable itself
-                    overLapIndex = self.crossword.overlaps[(var,neighbor)] # index where letter should be overlapped
-                    if(wV[overLapIndex[0]] != wN[overLapIndex[1]]): #if letter don't overlap at given index
-                        count += 1
-            dictionary[neighbor] = count
-        dictionary = dict(sorted(dictionary.items(), key=lambda item: item[1]))
-        ans = [k for k in dictionary]
+        aVar = self.select_unassigned_variable(assignment)
+        surrounding = self.crossword.neighbors(aVar)
+        # print(self.select_unassigned_variable(assignment), "'s surrounding: ",surrounding)
+        # print(aVar,"'s surrounding",surrounding)
+        for neighbor in surrounding:
+            # print("ran")
+            if neighbor not in assignment:
+                count = 0
+                for wN in self.domains[neighbor]: #words in neighbors
+                    for wV in self.domains[var]: #words in variable itself
+                        overLapIndex = self.crossword.overlaps[(var,neighbor)] # index where letter should be overlapped
+                        if(wV[overLapIndex[0]] != wN[overLapIndex[1]]): #if letter don't overlap at given index
+                            count += 1
+                        # if(wV[overLapIndex[0]] == wN[overLapIndex[1]]):
+                        #     print(wV," => ",wN)
+                dictionary[wV] = count
+                # print(dictionary)
+            dictionary = dict(sorted(dictionary.items(), key=lambda item: item[1]))
+            ans = [k for k in dictionary]
         return ans
 
     def select_unassigned_variable(self, assignment):
@@ -235,14 +245,15 @@ class CrosswordCreator():
         ans = dict()
         max = float('inf') #biggest number integer
         for variable in self.domains:
-            if len(self.domains[variable]) < max:
-                ans = dict()
-                ans[variable] = len(self.crossword.neighbors(variable))
-                max = len(self.domains[variable])
-            if len(self.domains[variable]) == max:
-                ans[variable] = len(self.crossword.neighbors(variable))
+            if variable not in assignment:
+                if len(self.domains[variable]) < max:
+                    ans = dict()
+                    ans[variable] = len(self.crossword.neighbors(variable))
+                    max = len(self.domains[variable])
+                if len(self.domains[variable]) == max:
+                    ans[variable] = len(self.crossword.neighbors(variable))
         ans = dict(sorted(ans.items(), key=lambda item: item[1]))
-        return list(ans)[0]
+        return list(ans)[-1]
 
     def backtrack(self, assignment):
         """
@@ -258,23 +269,25 @@ class CrosswordCreator():
         if(self.assignment_complete(assignment)):
             return assignment
         var = self.select_unassigned_variable(assignment)
-        print(var)
-        print(self.domains)
-        for value in self.domains:
-            if self.consistent(assignment):
-                print(self.domains)
-                # print("assignment[var]: ",list(self.domains[value])[0])
+        # print("my var: ",self.domains[var])
+        # print(self.domains)
+        for value in self.order_domain_values(var, assignment):
+            # print("assignment for self.consistent: ",self.order_domain_values(var, assignment))
+            new_assignment = assignment.copy()
+            new_assignment[var] = value
+            if self.consistent(self.crossword.neighbors(var)):
                 assignment[var] = list(self.domains[var])[0]
-                # print("assignment: ",assignment)
                 result = self.backtrack(assignment)
+                # print("result: ",result)
                 # print(assignment, " => ", result)
                 temp = {}
+                # print(self.domains)
                 for k in self.domains:
-                    #if there are more than 1 word that works then choose the first one
+                    #if there are more than 1 word that works then choose one in random
                     temp[k]=random.choice(list(self.domains[k]))
                 if result is not None:
-                    # print("backtrack result: ", result)
                     return temp
+                # print("removed ",var)
                 assignment.remove(var)
         return None
         
