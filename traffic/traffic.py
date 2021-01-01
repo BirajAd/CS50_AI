@@ -67,8 +67,8 @@ def load_data(data_dir):
     count = 0
     for repo in os.listdir(data_dir):
         # bar.start()
-        for img in os.listdir(data_dir+'/'+repo):
-            temp = cv2.imread(data_dir+'/'+repo+"/"+img)
+        for img in os.path.join(data_dir,repo):
+            temp = cv2.imread(os.path.join(data_dir,repo,img))
             temp.resize(30,30,3)
             images.append(temp)
             labels.append(int(repo))
