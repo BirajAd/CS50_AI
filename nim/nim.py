@@ -14,6 +14,7 @@ class Nim():
             - `winner`: None, 0, or 1 to indicate who the winner is
         """
         self.piles = initial.copy()
+        self.total = 0
         self.player = 0
         self.winner = None
 
@@ -73,7 +74,7 @@ class Nim():
 
 class NimAI():
 
-    def __init__(self, alpha=0.5, epsilon=0.1):
+    def __init__(self, alpha=0.1, epsilon=0.2):
         """
         Initialize AI with an empty Q-learning dictionary,
         an alpha (learning) rate, and an epsilon rate.
@@ -83,7 +84,7 @@ class NimAI():
          - `state` is a tuple of remaining piles, e.g. (1, 1, 4, 4)
          - `action` is a tuple `(i, j)` for an action
         """
-        self.total_win = 0
+        self.total = 0
         self.q = dict()
         self.alpha = alpha
         self.epsilon = epsilon
@@ -172,15 +173,16 @@ class NimAI():
         """
         final_ans = (list(Nim.available_actions(state))[0], -1)
         if epsilon ==  False:
-            print("Average -> ",self.q)
+            # print("Average -> ",self.q)
             for i in Nim.available_actions(state):
-                if (tuple(state),i) in self.q:
-                        print(i,self.get_q_value(state, i)," -> ",self.q[(tuple(state),i)])
+                # if (tuple(state),i) in self.q:
+                #         print(i,self.get_q_value(state, i)," -> ",self.q[(tuple(state),i)])
                 score = self.get_q_value(state, i)
-                if(score > final_ans[1]):
+                print((state,i)," -> ",score)
+                if(score >= final_ans[1]):
                     final_ans = (i, score)
-                    if (tuple(state),i) not in self.q:
-                        print("{} -> ",final_ans)
+                    # if (tuple(state),i) not in self.q:
+                    #     print("{} -> ",final_ans)
         elif(epsilon == True):
             a = list(Nim.available_actions(state))
             final_ans = (a[0], -1)
@@ -189,11 +191,8 @@ class NimAI():
                 if(score > final_ans[1]):
                     final_ans = (i, score)
             #chooses best move with 1-epsilon possibility and random move with epsilon possibility
-            selection = random.choices([final_ans[0], random.choice(a)],[self.epsilon,1-self.epsilon])
-            # if(final_ans[1] == 1):
-            #     print(state, final_ans)
+            selection = random.choices([final_ans[0], random.choice(a)],[1-self.epsilon,self.epsilon])
             return selection[0]
-        print(final_ans)
         return final_ans[0]
 
 
