@@ -7,11 +7,11 @@ Adj -> "country" | "dreadful" | "enigmatical" | "little" | "moist" | "red"
 Adv -> "down" | "here" | "never"
 Conj -> "and" | "until"
 Det -> "a" | "an" | "his" | "my" | "the"
-N -> "armchair" | "companion" | "day" | "door" | "hand" | "he" | "himself"
+N -> "armchair" | "companion" | "day" | "door" | "hand" | "he" | "himself" | "it"
 N -> "holmes" | "home" | "i" | "mess" | "paint" | "palm" | "pipe" | "she"
 N -> "smile" | "thursday" | "walk" | "we" | "word"
 P -> "at" | "before" | "in" | "of" | "on" | "to"
-V -> "arrived" | "came" | "chuckled" | "had" | "lit" | "said" | "sat"
+V -> "arrived" | "came" | "chuckled" | "had" | "lit" | "said" | "sat" | "aware"
 V -> "smiled" | "tell" | "were"
 """
 
@@ -83,8 +83,8 @@ def np_chunk(tree):
     whose label is "NP" that does not itself contain any other
     noun phrases as subtrees.
     """
-    print(list(tree))
-    raise NotImplementedError
+    all_nouns = [t for t in tree.subtrees() if t.label() == 'NP']
+    return all_nouns
 
 
 if __name__ == "__main__":
