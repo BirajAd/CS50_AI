@@ -7,7 +7,7 @@ from collections import Counter
 import itertools
 
 FILE_MATCHES = 1
-SENTENCE_MATCHES = 1
+SENTENCE_MATCHES = 2
 
 
 def main():
@@ -25,27 +25,28 @@ def main():
     file_idfs = compute_idfs(file_words)
 
     # Prompt user for query
-    query = set(tokenize(input("Query: ")))
+    while True:
+        query = set(tokenize(input("Query: ")))
 
-    # Determine top file matches according to TF-IDF
-    filenames = top_files(query, file_words, file_idfs, n=FILE_MATCHES)
+        # Determine top file matches according to TF-IDF
+        filenames = top_files(query, file_words, file_idfs, n=FILE_MATCHES)
 
-    # Extract sentences from top files
-    sentences = dict()
-    for filename in filenames:
-        for passage in files[filename].split("\n"):
-            for sentence in nltk.sent_tokenize(passage):
-                tokens = tokenize(sentence)
-                if tokens:
-                    sentences[sentence] = tokens
+        # Extract sentences from top files
+        sentences = dict()
+        for filename in filenames:
+            for passage in files[filename].split("\n"):
+                for sentence in nltk.sent_tokenize(passage):
+                    tokens = tokenize(sentence)
+                    if tokens:
+                        sentences[sentence] = tokens
 
-    # Compute IDF values across sentences
-    idfs = compute_idfs(sentences)
+        # Compute IDF values across sentences
+        idfs = compute_idfs(sentences)
 
-    # Determine top sentence matches
-    matches = top_sentences(query, sentences, idfs, n=SENTENCE_MATCHES)
-    for match in matches:
-        print(match)
+        # Determine top sentence matches
+        matches = top_sentences(query, sentences, idfs, n=SENTENCE_MATCHES)
+        for match in matches:
+            print(match)
 
 def load_files(directory):
     """
@@ -83,7 +84,7 @@ def compute_idfs(documents):
     of words, return a dictionary that maps words to their IDF values.
 
     Any word that appears in at least one of the documents should be in the
-    resulting dictionary.
+    resulting dictionary. 
     """
     #{'a': ['hello', 'hi'], 'b': ['hello', 'are', 'you']}
     all_words = []
